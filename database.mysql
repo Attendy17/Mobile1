@@ -1,0 +1,55 @@
+-- Crear la base de datos
+CREATE DATABASE IF NOT EXISTS MovieRentalDB;
+USE MovieRentalDB;
+
+-- Tabla para los usuarios (Clientes y Administradores)
+CREATE TABLE Users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,  -- Contraseña encriptada
+    role ENUM('user', 'admin') DEFAULT 'user'  -- Define si es un usuario regular o administrador
+);
+
+-- Tabla para las películas
+CREATE TABLE Movies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,  -- Título de la película
+    genre VARCHAR(50) NOT NULL,   -- Género (Thriller, Acción, Historia, etc.)
+    plot TEXT NOT NULL,           -- Sinopsis o descripción de la película
+    actors TEXT NOT NULL,         -- Actores principales
+    director VARCHAR(100),        -- Director de la película
+    release_year YEAR NOT NULL,   -- Año de lanzamiento
+    country VARCHAR(50),          -- País de origen
+    image_url VARCHAR(255)        -- URL de la imagen de la portada
+);
+
+-- Tabla para gestionar la cola de películas de los usuarios
+CREATE TABLE MovieQueue (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,         -- Referencia al usuario
+    movie_id INT NOT NULL,        -- Referencia a la película
+    status ENUM('queued', 'mailed', 'returned', 'watched') DEFAULT 'queued',  -- Estado de la película en la cola
+    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,  -- Relación con la tabla Users
+    FOREIGN KEY (movie_id) REFERENCES Movies(id) ON DELETE CASCADE -- Relación con la tabla Movies
+);
+
+-- Tabla para el historial de alquileres
+CREATE TABLE RentalHistory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,         -- Referencia al usuario
+    movie_id INT NOT NULL,        -- Referencia a la película
+    status ENUM('mailed', 'returned', 'watched') DEFAULT 'mailed', -- Estado del alquiler
+    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,  -- Relación con la tabla Users
+    FOREIGN KEY (movie_id) REFERENCES Movies(id) ON DELETE CASCADE -- Relación con la tabla Movies
+);
+
+-- Tabla para registrar las acciones de los administradores
+CREATE TABLE AdminActions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_id INT NOT NULL,        -- Referencia al administrador (usuario con rol 'admin')
+    action_type ENUM('add', 'modify', 'remove') NOT NULL,  -- Acción realizada por el administrador
+    movie_id INT NOT NULL,        -- Película afectada por la acción
+    FOREIGN KEY (admin_id) REFERENCES Users(id) ON DELETE CASCADE,  -- Relación con la tabla Users
+    FOREIGN KEY (movie_id) REFERENCES Movies(id) ON DELETE CASCADE  -- Relación con la tabla Movies
+);
